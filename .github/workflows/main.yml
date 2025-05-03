@@ -1,0 +1,46 @@
+name: Deploy to GitHub Pages  # 定义工作流名称为“部署到 GitHub Pages”
+
+on:
+  push:
+    branches:
+      - main  # 当向 main 分支推送代码时，触发此工作流
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # 设置工作流的运行环境为最新版本的 Ubuntu
+    permissions: 
+      contents: write  # 给工作流提供写入仓库内容的权限
+    steps:
+      - name: Checkout  # 第一步：检出代码
+        uses: actions/checkout@v4  # 使用 GitHub 官方的 actions/checkout 动作来检出仓库代码
+
+      - name: Install pnpm  # 第二步：安装 pnpm（一个高效的 JavaScript 包管理工具）
+        uses: pnpm/action-setup@v4  # 使用 pnpm 官方提供的设置动作
+        with:
+          version: 9  # 安装 pnpm 的版本 9
+
+      - name: Use Node.js 20  # 第三步：设置 Node.js 环境为版本 20
+        uses: actions/setup-node@v4  # 使用 GitHub 官方的 actions/setup-node 动作来设置 Node.js
+        with:
+          node-version: 20  # 设置 Node.js 的版本为 20
+          cache: 'pnpm'  # 启用 pnpm 的缓存，以加速依赖安装
+
+      - name: Install dependencies  # 第四步：安装项目依赖
+        run: pnpm install  # 运行 pnpm 来安装项目中的所有依赖
+
+      - name: Install Hexo CLI  # 第五步：安装 Hexo CLI
+        run: pnpm add -g hexo-cli  # 使用 pnpm 全局安装 Hexo CLI（命令行工具）
+
+      - name: Install NexT Theme  # 第六步：安装 NexT 主题
+        run: pnpm install hexo-theme-next  # 使用 pnpm 安装 Hexo 的 NexT 主题
+
+      - name: Generate site  # 第七步：生成 Hexo 网站的静态文件
+        run: hexo g  # 运行 Hexo 的生成命令来生成静态网站文件
+
+      - name: Deploy to GitHub Pages  # 第八步：将生成的静态文件部署到 GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4  # 使用 peaceiris 提供的 actions-gh-pages 动作来部署
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # 使用 GitHub 自动生成的 token 来进行认证
+          publish_branch: gh-pages  # 指定要将静态文件部署到 gh-pages 分支
+          publish_dir: ./public  # 指定要发布的文件夹，通常是 Hexo 生成的 ./public 文件夹
+          cname: hexo.ddmtdxw.top  # 指定自定义域名，如果有的话，替换成你自己的域名
