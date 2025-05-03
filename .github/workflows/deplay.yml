@@ -1,0 +1,59 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # 监听 main 分支的推送
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # 使用最新版本的 Ubuntu 运行作业
+    permissions:
+      contents: write  # 允许写入仓库内容
+
+    # 缓存依赖以加速构建过程
+    # 缓存 node_modules 和 pnpm-store 目录
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4  # 检出代码
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4  # 安装 pnpm
+        with:
+          version: 9  # 使用 pnpm 的版本 9
+
+      - name: Cache pnpm store and node_modules
+        uses: actions/cache@v3  # 缓存 pnpm store 和 node_modules 来加速后续的构建
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4  # 设置 Node.js 环境
+        with:
+          node-version: 20  # 使用 Node.js 版本 20
+          cache: 'pnpm'  # 启用 pnpm 缓存
+
+      - name: Install dependencies
+        run: pnpm install  # 安装所有依赖
+
+      - name: Install Hexo CLI
+        run: pnpm add -g hexo-cli  # 全局安装 Hexo CLI
+
+      - name: Install NexT Theme
+        run: pnpm install hexo-theme-next  # 安装 Hexo NexT 主题
+
+      - name: Generate site
+        run: hexo generate  # 生成 Hexo 网站的静态文件
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4  # 使用 peaceiris 的 GitHub Actions 动作来部署
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # 使用 GitHub Token 进行认证
+          publish_branch: gh-pages  # 部署到 gh-pages 分支
+          publish_dir: ./public  # 指定部署的文件夹
+          cname: hexo.ddmtdxw.top  # 如果有自定义域名可以设置，这里请替换为你自己的域名
