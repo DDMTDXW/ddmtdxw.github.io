@@ -44,9 +44,6 @@ jobs:
       - name: Install Hexo CLI
         run: pnpm add -g hexo-cli  # 全局安装 Hexo CLI
 
-      - name: Install NexT Theme
-        run: pnpm install hexo-theme-next  # 安装 Hexo NexT 主题
-
       - name: Generate site
         run: hexo generate  # 生成 Hexo 网站的静态文件
 
